@@ -1,0 +1,6 @@
+export enum FeedCompany {
+  ARVINES = 'ARVINES',
+  SILVERLAND = 'SILVERLAND',
+  BACKBONE = 'BACKBONE',
+  LOCAL = 'LOCAL'
+} 
