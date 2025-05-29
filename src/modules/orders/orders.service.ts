@@ -46,9 +46,11 @@ export class OrdersService {
         return order;
       }
 
-      // Order Managers can only view their own orders
-      if (userRole === UserRole.ORDER_MANAGER && order.orderManager.id !== userId) {
-        throw new ForbiddenException('You do not have permission to view this order');
+      // Order Managers and Customers can only view their own orders
+      if ([UserRole.ORDER_MANAGER, UserRole.CUSTOMER].includes(userRole)) {
+        if (!order.orderManager || order.orderManager.id !== userId) {
+          throw new ForbiddenException('You do not have permission to view this order');
+        }
       }
 
       return order;
@@ -318,8 +320,8 @@ export class OrdersService {
         return queryBuilder.getMany();
       }
 
-      // Order managers can only see their own orders
-      if (userRole === UserRole.ORDER_MANAGER) {
+      // Order managers and customers can only see their own orders
+      if ([UserRole.ORDER_MANAGER, UserRole.CUSTOMER].includes(userRole)) {
         return queryBuilder
           .where('order.orderManagerId = :userId', { userId })
           .getMany();

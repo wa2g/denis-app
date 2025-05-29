@@ -17,7 +17,7 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
-  @Roles(UserRole.ORDER_MANAGER)
+  @Roles(UserRole.ORDER_MANAGER, UserRole.CUSTOMER)
   @ApiOperation({ summary: 'Create a new order' })
   @ApiBody({ type: CreateOrderDto })
   @ApiResponse({ 
@@ -60,7 +60,7 @@ export class OrdersController {
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.ACCOUNTANT, UserRole.ORDER_MANAGER, UserRole.CEO)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.ACCOUNTANT, UserRole.ORDER_MANAGER, UserRole.CEO, UserRole.CUSTOMER)
   @ApiOperation({ summary: 'Get all orders' })
   @ApiResponse({
     status: 200,
@@ -72,7 +72,7 @@ export class OrdersController {
   }
 
   @Get(':orderNumber')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.ACCOUNTANT, UserRole.ORDER_MANAGER, UserRole.CEO)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.ACCOUNTANT, UserRole.ORDER_MANAGER, UserRole.CEO, UserRole.CUSTOMER)
   @ApiOperation({ summary: 'Get order by order number' })
   @ApiParam({ name: 'orderNumber', description: 'Order number (e.g., ORD-2023-0001)' })
   @ApiResponse({
@@ -89,7 +89,7 @@ export class OrdersController {
   }
 
   @Get(':orderNumber/details')
-  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.ACCOUNTANT, UserRole.ORDER_MANAGER, UserRole.CEO)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.ACCOUNTANT, UserRole.ORDER_MANAGER, UserRole.CEO, UserRole.CUSTOMER)
   @ApiOperation({ summary: 'Get detailed order information for approval' })
   @ApiParam({ name: 'orderNumber', description: 'Order number (e.g., ORD-2023-0001)' })
   @ApiResponse({
