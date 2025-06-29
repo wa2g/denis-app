@@ -8,6 +8,7 @@ import { Customer } from './entities/customer.entity';
 import { UserRole } from '../users/enums/user-role.enum';
 import { ChickenStockService } from './chicken-stock.service';
 import { FeedOrder } from './entities/feed-order.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ChickenOrdersService {
@@ -19,6 +20,7 @@ export class ChickenOrdersService {
     @InjectRepository(FeedOrder)
     private readonly feedOrdersRepository: Repository<FeedOrder>,
     private readonly chickenStockService: ChickenStockService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(createChickenOrderDto: CreateChickenOrderDto, userId: string): Promise<ChickenOrder> {
@@ -159,5 +161,57 @@ export class ChickenOrdersService {
         orderDate: 'DESC',
       },
     });
+  }
+
+  async updateReceivingStatus(id: string, receivingStatus: string, userId: string, userRole: UserRole): Promise<ChickenOrder> {
+    const order = await this.findOne(id, userId, userRole);
+
+    // Validate status transition
+    if (order.receivingStatus === 'PENDING' && receivingStatus !== 'IN_PROGRESS') {
+      throw new BadRequestException('Pending orders can only be moved to IN_PROGRESS status');
+    }
+
+    if (order.receivingStatus === 'IN_PROGRESS' && receivingStatus !== 'APPROVED') {
+      throw new BadRequestException('IN_PROGRESS orders can only be moved to APPROVED status');
+    }
+
+    if (['APPROVED', 'CANCELLED'].includes(order.receivingStatus)) {
+      throw new BadRequestException(`Cannot update status of ${order.receivingStatus.toLowerCase()} orders`);
+    }
+
+    // Update the receiving status
+    order.receivingStatus = receivingStatus;
+
+    const savedOrder = await this.chickenOrdersRepository.save(order);
+
+    // Send notifications based on the new status
+    await this.sendReceivingStatusNotifications(savedOrder);
+
+    return savedOrder;
+  }
+
+  private async sendReceivingStatusNotifications(order: ChickenOrder): Promise<void> {
+    switch (order.receivingStatus) {
+      case 'IN_PROGRESS':
+        // Notify managers that the order is ready for approval
+        await this.notificationsService.notifyRole(
+          UserRole.MANAGER,
+          `Chicken order ${order.id} is ready for approval`
+        );
+        break;
+      case 'APPROVED':
+        // Send email notification to customer when order is approved
+        if (order.customer?.email) {
+          const totalAmount = order.totalChickenPrice;
+          await this.notificationsService.sendCustomerOrderApprovalNotification(
+            order.customer.email,
+            `CHK-${order.id.slice(0, 8)}`, // Create a simple order number
+            totalAmount
+          );
+        } else {
+          console.log(`No email address found for customer ${order.customerId}. Email notification skipped.`);
+        }
+        break;
+    }
   }
 } 

@@ -245,6 +245,19 @@ export class OrdersService {
           UserRole.ORDER_MANAGER,
           `Order ${order.orderNumber} is approved and ready for delivery`
         );
+        // Send email notification to customer when order is approved
+        // Try to find the customer by phone number
+        const customerRepo = (this.ordersRepository.manager.connection as any).getRepository('Customer');
+        const customer = await customerRepo.findOne({ where: { phone: order.phoneNumber } });
+        if (customer && customer.email) {
+          await this.notificationsService.sendCustomerOrderApprovalNotification(
+            customer.email,
+            order.orderNumber,
+            order.totalAmount
+          );
+        } else {
+          console.log(`No customer with email found for order ${order.orderNumber}. Email notification skipped.`);
+        }
         break;
       case OrderStatus.CANCELLED:
         message = `Order ${order.orderNumber} has been cancelled${reason ? `: ${reason}` : ''}`;

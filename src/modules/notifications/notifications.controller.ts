@@ -5,9 +5,11 @@ import { UserRole } from '../users/enums/user-role.enum';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ApiOperation, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('notifications')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
@@ -26,5 +28,16 @@ export class NotificationsController {
   @Roles(UserRole.ADMIN)
   create(@Body() createNotificationDto: CreateNotificationDto) {
     return this.notificationsService.create(createNotificationDto);
+  }
+
+  @Post('test-email')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Send test order approval email to customer', description: 'Sends a test order approval email to the specified customer email address.' })
+  @ApiBody({ schema: { properties: { email: { type: 'string', example: 'customer@example.com' }, orderNumber: { type: 'string', example: 'ORD123456' }, totalAmount: { type: 'number', example: 100000 } }, required: ['email', 'orderNumber', 'totalAmount'] } })
+  @ApiResponse({ status: 200, description: 'Test email sent successfully', schema: { example: { message: 'Test email sent to customer@example.com' } } })
+  async sendTestEmail(@Body() body: { email: string; orderNumber: string; totalAmount: number }) {
+    const { email, orderNumber, totalAmount } = body;
+    await this.notificationsService.sendCustomerOrderApprovalNotification(email, orderNumber, totalAmount);
+    return { message: `Test email sent to ${email}` };
   }
 } 

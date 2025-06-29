@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsEnum, IsArray, ValidateNested, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsEnum, IsArray, ValidateNested, IsOptional, IsEmail } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CustomerSex } from '../enums/customer-sex.enum';
 import { CustomerCenter } from '../enums/customer-center.enum';
@@ -53,6 +53,15 @@ export class CreateCustomerDto {
   @IsString()
   @IsNotEmpty()
   phone: string;
+
+  @ApiProperty({
+    description: 'Email address',
+    example: 'john.doe@example.com',
+    required: false
+  })
+  @IsEmail()
+  @IsOptional()
+  email?: string;
 
   @ApiProperty({
     description: 'Place of farming',

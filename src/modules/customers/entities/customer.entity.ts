@@ -31,6 +31,14 @@ export class Customer {
   phone: string;
 
   @ApiProperty({
+    description: 'Email address of the customer',
+    example: 'john.doe@example.com',
+    required: false
+  })
+  @Column({ nullable: true })
+  email: string;
+
+  @ApiProperty({
     description: 'Customer sex',
     enum: CustomerSex,
     example: CustomerSex.MALE

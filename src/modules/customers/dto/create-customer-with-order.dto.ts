@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsString, IsEnum, IsDate, ValidateNested, IsNumber, IsPositive, IsArray, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsEnum, IsDate, ValidateNested, IsNumber, IsPositive, IsArray, IsOptional, IsEmail } from 'class-validator';
 import { CustomerSex } from '../enums/customer-sex.enum';
 import { CustomerCenter } from '../enums/customer-center.enum';
 import { ChickenType } from '../enums/chicken-type.enum';
@@ -105,6 +105,15 @@ export class CreateCustomerWithOrderDto {
   @IsString()
   @IsNotEmpty()
   phone: string;
+
+  @ApiProperty({
+    description: 'Email address',
+    example: 'john.doe@example.com',
+    required: false
+  })
+  @IsEmail()
+  @IsOptional()
+  email?: string;
 
   @ApiProperty({
     description: 'Customer sex',

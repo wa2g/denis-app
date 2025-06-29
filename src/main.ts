@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import * as express from 'express';
 import { join } from 'path';
+import * as nodemailer from 'nodemailer';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -119,7 +120,7 @@ async function bootstrap() {
       defaultModelExpandDepth: 3
     },
     customCss: `
-      .swagger-ui .topbar { display: none }
+      /* .swagger-ui .topbar { display: none } */
       .swagger-ui .scheme-container { display: none }
       .swagger-ui .servers { display: none }
       .swagger-ui .information-container { margin-bottom: 30px }
@@ -143,5 +144,30 @@ async function bootstrap() {
   });
 
   await app.listen(3000);
+
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: 'watuguludenis@gmail.com',
+      pass: 'xgiq xlbz ntch wtim',
+    },
+  });
+
+  (async () => {
+    try {
+      const info = await transporter.sendMail({
+        from: '"SpaDe" <watuguludenis@gmail.com>',
+        to: 'watuguludenis@gmail.com',
+        subject: 'Order Approved',
+        text: 'Your order has been approved!',
+      });
+      console.log('Email sent:', info.response);
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
+  })();
 }
+
 bootstrap();

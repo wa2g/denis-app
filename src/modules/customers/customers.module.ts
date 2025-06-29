@@ -14,6 +14,7 @@ import { ChickenTrackingEntity } from './entities/chicken-tracking.entity';
 import { User } from '../users/entities/user.entity';
 import { FeedOrder } from './entities/feed-order.entity';
 import { Order } from '../orders/entities/order.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { Order } from '../orders/entities/order.entity';
       FeedOrder,
       Order
     ]),
+    NotificationsModule,
   ],
   controllers: [CustomersController, ChickenOrdersController, ChickenStockController],
   providers: [CustomersService, ChickenOrdersService, ChickenStockService],

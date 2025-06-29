@@ -806,6 +806,7 @@ export class CustomersService {
         name: dto.name,
         phone: dto.phone,
         sex: dto.sex,
+        email: dto.email,
         farmingPlace: dto.farmingPlace,
         village: dto.village,
         street: dto.street,
