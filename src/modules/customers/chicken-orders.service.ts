@@ -206,7 +206,8 @@ export class ChickenOrdersService {
           await this.notificationsService.sendCustomerOrderApprovalNotification(
             order.customer.email,
             `CHK-${order.id.slice(0, 8)}`, // Create a simple order number
-            totalAmount
+            totalAmount,
+            order.customer.name
           );
         } else {
           console.log(`No email address found for customer ${order.customerId}. Email notification skipped.`);

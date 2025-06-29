@@ -253,7 +253,8 @@ export class OrdersService {
           await this.notificationsService.sendCustomerOrderApprovalNotification(
             customer.email,
             order.orderNumber,
-            order.totalAmount
+            order.totalAmount,
+            customer.name
           );
         } else {
           console.log(`No customer with email found for order ${order.orderNumber}. Email notification skipped.`);

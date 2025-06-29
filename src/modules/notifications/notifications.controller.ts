@@ -33,11 +33,11 @@ export class NotificationsController {
   @Post('test-email')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Send test order approval email to customer', description: 'Sends a test order approval email to the specified customer email address.' })
-  @ApiBody({ schema: { properties: { email: { type: 'string', example: 'customer@example.com' }, orderNumber: { type: 'string', example: 'ORD123456' }, totalAmount: { type: 'number', example: 100000 } }, required: ['email', 'orderNumber', 'totalAmount'] } })
+  @ApiBody({ schema: { properties: { email: { type: 'string', example: 'customer@example.com' }, orderNumber: { type: 'string', example: 'ORD123456' }, totalAmount: { type: 'number', example: 100000 }, customerName: { type: 'string', example: 'John Doe' } }, required: ['email', 'orderNumber', 'totalAmount'] } })
   @ApiResponse({ status: 200, description: 'Test email sent successfully', schema: { example: { message: 'Test email sent to customer@example.com' } } })
-  async sendTestEmail(@Body() body: { email: string; orderNumber: string; totalAmount: number }) {
-    const { email, orderNumber, totalAmount } = body;
-    await this.notificationsService.sendCustomerOrderApprovalNotification(email, orderNumber, totalAmount);
+  async sendTestEmail(@Body() body: { email: string; orderNumber: string; totalAmount: number; customerName?: string }) {
+    const { email, orderNumber, totalAmount, customerName } = body;
+    await this.notificationsService.sendCustomerOrderApprovalNotification(email, orderNumber, totalAmount, customerName);
     return { message: `Test email sent to ${email}` };
   }
 } 

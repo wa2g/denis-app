@@ -6,6 +6,10 @@ import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationStatus } from './enums/notification-status.enum';
 import { UserRole } from '../users/enums/user-role.enum';
 import * as nodemailer from 'nodemailer';
+import * as PDFDocument from 'pdfkit';
+import * as fs from 'fs';
+import * as path from 'path';
+import { emailTemplates, EmailTemplateData } from './templates/email-templates';
 
 @Injectable()
 export class NotificationsService {
@@ -50,14 +54,73 @@ export class NotificationsService {
   }
 
   /**
-   * Send an order approval email to the customer.
-   * @param customerEmail The customer's email address
-   * @param orderNumber The order number
-   * @param totalAmount The total amount for the order
+   * Generate a PDF order document and return the file path
    */
-  async sendCustomerOrderApprovalNotification(customerEmail: string, orderNumber: string, totalAmount: number): Promise<void> {
-    const subject = `Your order ${orderNumber} has been approved!`;
-    const message = `Dear Customer,\n\nYour order ${orderNumber} has been approved!\nTotal amount: TZS ${totalAmount}.\nYou can now proceed with payment. Thank you for choosing our services.\n\nBest regards,\nSpade Team`;
+  private async generateOrderPDF(orderNumber: string, customerEmail: string, totalAmount: number): Promise<string> {
+    const doc = new PDFDocument();
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir);
+    }
+    const filePath = path.join(uploadsDir, `${orderNumber}_order.pdf`);
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
+
+    doc.fontSize(20).text('Order Approval', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(12).text(`Order Number: ${orderNumber}`);
+    doc.text(`Customer Email: ${customerEmail}`);
+    doc.text(`Total Amount: TZS ${totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+    doc.moveDown();
+    doc.text('Payment Options:', { underline: true });
+    doc.text('Mobile Transfer:');
+    doc.text('  Tigo Pesa - Lipa Number: 123456, Name: Spade');
+    doc.text('  Vodacom M-Pesa - Lipa Number: 123456, Name: Spade');
+    doc.moveDown();
+    doc.text('Bank Transfer:');
+    doc.text('  CRDB Bank - Account Number: 123456, Account Name: Spade');
+    doc.text('  NMB Bank - Account Number: 123456, Account Name: Spade');
+    doc.moveDown();
+    doc.text('Once payment is completed, please share the confirmation via reply to this email or through our official contact.');
+    doc.moveDown();
+    doc.text('Thank you for choosing us!');
+    doc.text('Best regards,');
+    doc.text('Spade Team');
+
+    doc.end();
+
+    // Wait for the file to finish writing
+    await new Promise((resolve, reject) => {
+      stream.on('finish', resolve);
+      stream.on('error', reject);
+    });
+    return filePath;
+  }
+
+  async sendCustomerOrderApprovalNotification(
+    customerEmail: string,
+    orderNumber: string,
+    totalAmount: number,
+    customerName?: string
+  ): Promise<void> {
+    const templateData: EmailTemplateData = {
+      orderNumber,
+      customerName,
+      totalAmount,
+      customerEmail
+    };
+
+    const subject = emailTemplates.orderApproval.subject(templateData);
+    const htmlContent = emailTemplates.orderApproval.html(templateData);
+    const textContent = emailTemplates.orderApproval.text(templateData);
+
+    // Generate PDF and get file path
+    let attachmentPath: string | undefined = undefined;
+    try {
+      attachmentPath = await this.generateOrderPDF(orderNumber, customerEmail, totalAmount);
+    } catch (err) {
+      console.error('Failed to generate order PDF:', err);
+    }
 
     // Set up Nodemailer transporter using Gmail SMTP
     const transporter = nodemailer.createTransport({
@@ -68,13 +131,25 @@ export class NotificationsService {
       },
     });
 
+    const mailOptions: any = {
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      to: customerEmail,
+      subject,
+      text: textContent,
+      html: htmlContent,
+    };
+    
+    if (attachmentPath) {
+      mailOptions.attachments = [
+        {
+          filename: attachmentPath.split('/').pop(),
+          path: attachmentPath,
+        },
+      ];
+    }
+
     try {
-      const info = await transporter.sendMail({
-        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-        to: customerEmail,
-        subject,
-        text: message,
-      });
+      const info = await transporter.sendMail(mailOptions);
       console.log(`Order approval email sent to ${customerEmail}: ${info.messageId}`);
     } catch (error) {
       console.error(`Failed to send order approval email to ${customerEmail}:`, error);
